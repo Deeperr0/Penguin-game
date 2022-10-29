@@ -4,6 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+
 // Declaring variables
 int columns, rows, numberOfPlayers, numberOfPenguins, totalPenguins, fish, moveR, moveC, p, move, plays, stuck_players;
 double maxPenguins, rounds;
@@ -26,7 +27,7 @@ Players players[10];
 int roundNearest();
 void create_board();
 int check_free_spaces();
-void player_move();
+bool player_move();
 char check_1st_place();
 char check_2nd_place();
 char check_3rd_place();
@@ -44,7 +45,6 @@ int main()
     {
         printf("Enter number of columns:");
         scanf("%d", &columns);
-        // Checking that the value entered is valid
         if (columns <= 0)
         {
             printf("Columns must have a positive value\n");
@@ -52,7 +52,6 @@ int main()
         }
         printf("Enter number of rows: ");
         scanf("%d", &rows);
-        // Making sure the board is of a reasonable size
         if (columns * rows >= 25)
         {
             // Create board
@@ -65,7 +64,7 @@ int main()
         }
     }
 
-    // Input number of players and penguins per player
+    // Make sure the table is not too crowded
     while (true)
     {
         printf("Enter number of players: ");
@@ -79,13 +78,11 @@ int main()
         printf("Enter number of penguins per player: ");
         scanf("%d", &numberOfPenguins);
         printf("%d\n", numberOfPenguins);
-        // Checking that number of penguins per player is valid
         if (numberOfPlayers < 0)
         {
             printf("Invalid number of penguins\n");
             continue;
         }
-        // Make sure the table is not too crowded
         totalPenguins = numberOfPenguins * numberOfPlayers;
         maxPenguins = 0.5 * sqrt(rows * columns);
         if (totalPenguins <= maxPenguins)
@@ -100,7 +97,7 @@ int main()
     char penguins[numberOfPenguins * 2];
 
     // Start game
-    // Placement phase
+
     for (int p = 0; p < numberOfPlayers; p++)
     {
         printf("Player %d's turn\n", p + 1);
@@ -116,7 +113,6 @@ int main()
                 scanf("%d", &moveR);
                 printf("Which column do you want to place penguin no.%d on?\n", n);
                 scanf("%d", &moveC);
-                // Make sure that the penguin is placed on a floe with exactly 1 fish
                 if (numbers[moveR][moveC] == 1)
                 {
                     players[p + 1].positionR = moveR;
@@ -138,15 +134,20 @@ int main()
     {
         for (p = 0; p < numberOfPlayers; p++)
         {
-            // Check if there are any valid moves
-            if (check_free_spaces() != 1)
+            for (p = 0; p < numberOfPlayers; p++)
             {
-                stuck_players++;
-                break;
-            }
-            else
-            {
-                continue;
+                if (check_free_spaces() == 1)
+                {
+                    continue;
+                }
+                else
+                {
+                    players[p + 1].canMove = false;
+                }
+                if (players[p + 1].canMove == false)
+                {
+                    stuck_players++;
+                }
             }
             if (stuck_players == numberOfPlayers)
             {
@@ -156,11 +157,6 @@ int main()
             {
                 stuck_players = 0;
             }
-
-
-            // If there are valid moves the game will continue
-            printf("%lf\n", roundNearest(rounds));
-            playersPlayed++;
             printf("%s's turn:\n", players[p + 1].name);
             for (int penguinsMoved = 0; penguinsMoved < numberOfPenguins; penguinsMoved++)
             {
@@ -173,16 +169,28 @@ int main()
                 else
                 {
                     players[p + 1].canMove = false;
+
+                    stuck_players++;
+
+                    if (stuck_players == numberOfPlayers)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
         }
     }
+    int n = 0;
     for (p = 0; p < numberOfPlayers; p++)
     {
         scoreboard[p] = players[p + 1].score;
     }
     printf("[");
-    for(int scores = 0; scores < 10; scores++)
+    for (int scores = 0; scores < 10; scores++)
     {
         if (scoreboard[scores] > 0)
         {
@@ -225,18 +233,15 @@ void print_board()
         printf("  |");
         for (int j = 0; j < columns; j++)
         {
-            for(int p; p < numberOfPlayers ; p++)
+            if (i == players[p + 1].positionR && j == players[p + 1].positionC)
             {
-                if (i == players[p + 1].positionR && j == players[p + 1].positionC)
-                {
-                    printf(" %c", players[p + 1].name[0]);
-                    printf(" |");
-                }
-                else
-                {
-                    printf(" %d", numbers[i][j]);
-                    printf(" |");
-                }
+                printf(" %c", players[p + 1].name[0]);
+                printf(" |");
+            }
+            else
+            {
+                printf(" %d", numbers[i][j]);
+                printf(" |");
             }
         }
         printf("\n--");
@@ -249,7 +254,7 @@ void print_board()
 }
 int check_free_spaces()
 {
-    if (numbers[players[p + 1].positionR + 1][players[p + 1].positionC] != 0 || numbers[players[p + 1].positionR][players[p + 1].positionC + 1] != 0 || numbers[players[p + 1].positionR - 1][players[p + 1].positionC] != 0 || numbers[players[p + 1].positionR][players[p + 1].positionC - 1] != 0)
+    if (numbers[players[p + 1].positionR + 1][players[p + 1].positionC] > 0 || numbers[players[p + 1].positionR][players[p + 1].positionC + 1] > 0 || numbers[players[p + 1].positionR - 1][players[p + 1].positionC] > 0 || numbers[players[p + 1].positionR][players[p + 1].positionC - 1] > 0)
     {
         return 1;
     }
@@ -258,7 +263,7 @@ int check_free_spaces()
         return 0;
     }
 }
-void player_move()
+bool player_move()
 {
     printf("Where do you want to move? (1=left, 2=up, 3=right, 4= down)\n");
     scanf("%d", &move);
