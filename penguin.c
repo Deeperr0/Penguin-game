@@ -25,16 +25,12 @@ typedef struct
 } Players;
 Players players[10];
 // Declaring Functions
-int roundNearest();
 void create_board();
 int check_free_spaces();
 void player_move();
-char check_1st_place();
-char check_2nd_place();
-char check_3rd_place();
-void print_1st_place(char);
-void print_2nd_place(char);
-void print_3rd_place(char);
+void check_1st_place();
+void check_2nd_place();
+void check_3rd_place();
 void print_board();
 void printArray(int array[], int size);
 void sort(int array[], int size);
@@ -77,10 +73,8 @@ int main()
             printf("Invalid number of players\n");
             continue;
         }
-        printf("%d\n", numberOfPlayers);
         printf("Enter number of penguins per player: ");
         scanf("%d", &numberOfPenguins);
-        printf("%d\n", numberOfPenguins);
         if (numberOfPenguins <= 0)
         {
             printf("Invalid number of penguins\n");
@@ -174,23 +168,11 @@ int main()
     {
         scoreboard[p] = players[p + 1].score;
     }
-    printf("[");
-    for (int scores = 0; scores < 10; scores++)
-    {
-        if (scoreboard[scores] > 0)
-        {
-            printf("%d ", scoreboard[scores]);
-        }
-        else
-        {
-            continue;
-        }
-    }
-    printf("]\n");
     int size = sizeof(scoreboard) / sizeof(scoreboard[0]);
     sort(scoreboard, size);
-    printArray(scoreboard, size);
-    for(int i = 0; i < numberOfPlayers; i++)
+    check_1st_place();
+    check_2nd_place();
+    check_3rd_place();
     return 0;
 }
 
@@ -274,7 +256,7 @@ void player_move()
             }
             else
             {
-                printf("You moved left!\n");
+                printf("%s moved left!\n", players[p+1].name);
                 numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
                 players[p + 1].score += numbers[players[p + 1].positionR][players[p + 1].positionC - 1];
                 players[p + 1].positionC -= 1;
@@ -292,7 +274,7 @@ void player_move()
             }
             else
             {
-                printf("You moved up!\n");
+                printf("%s moved up!\n", players[p+1].name);
                 numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
                 players[p + 1].score += numbers[players[p + 1].positionR - 1][players[p + 1].positionC];
                 players[p + 1].positionR -= 1;
@@ -309,7 +291,7 @@ void player_move()
             }
             else
             {
-                printf("You moved right!\n");
+                printf("%s moved right!\n", players[p+1].name);
                 numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
                 players[p + 1].score += numbers[players[p + 1].positionR][players[p + 1].positionC + 1];
                 players[p + 1].positionC += 1;
@@ -326,7 +308,7 @@ void player_move()
             }
             else
             {
-                printf("You moved down\n");
+                printf("%s moved down\n", players[p+1].name);
                 numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
                 players[p + 1].score += numbers[players[p + 1].positionR + 1][players[p + 1].positionC];
                 players[p + 1].positionR += 1;
@@ -343,33 +325,60 @@ void player_move()
         }
     }
 }
-char check_1st_place()
+void check_1st_place()
 {
-}
-char check_2nd_place()
-{
-}
-char check_3rd_place()
-{
-}
-void print_1st_place(char first)
-{
-}
-void print_2nd_place(char second)
-{
-}
-void print_3rd_place(char third)
-{
-}
-int roundNearest(double x)
-{
-    if (ceil(x) - x > floor(x) - x)
+    for (int place = 0; place < numberOfPlayers; place++)
     {
-        return ceil(x);
+        if (scoreboard[0] == players[place + 1].score)
+        {
+            printf("%s (%d) won \n", players[place + 1].name, players[place + 1].score);
+            break;
+        }
+        else
+        {
+            continue;
+        }
     }
-    else
+}
+void check_2nd_place()
+{
+    for (int place = 0; place < numberOfPlayers; place++)
     {
-        return floor(x);
+        if (scoreboard[1] == players[place + 1].score)
+        {
+            if(numberOfPlayers == 2)
+            {
+                printf("%s (%d) lost :( \n", players[place + 1].name, players[place + 1].score);
+                break;
+            }
+            else
+            {
+                printf("%s (%d) placed second\n", players[place + 1].name, players[place + 1].score);
+                break;
+            }
+        }
+        else
+        {
+            continue;
+        }
+    }
+}
+void check_3rd_place()
+{
+    if (numberOfPlayers > 2)
+    {
+        for (int place = 0; place < numberOfPlayers; place++)
+        {
+            if (scoreboard[2] == players[place + 1].score)
+            {
+                printf("%s (%d) placed third \n", players[place + 1].name, players[place + 1].score);
+                break;
+            }
+            else
+            {
+                continue;
+            }
+        }
     }
 }
 void sort(int array[], int size)
@@ -394,3 +403,4 @@ void printArray(int array[], int size)
         printf("%d ", array[i]);
     }
 }
+void checkInput(int input)
