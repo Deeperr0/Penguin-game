@@ -6,13 +6,14 @@
 #include <stdlib.h>
 
 // Declaring variables
-int columns, rows, numberOfPlayers, numberOfPenguins, totalPenguins, fish, moveR, moveC, p, move, plays, stuck_players;
+int columns, rows, numberOfPlayers, numberOfPenguins, totalPenguins, fish, moveR, moveC, p, move, plays, stuck_players, g;
 double maxPenguins, rounds;
 int playersPlayed;
 int numbers[25][25];
 char first_place[12];
 char name[12];
 int scoreboard[10];
+char letter;
 typedef struct
 {
     char name[12];
@@ -27,7 +28,7 @@ Players players[10];
 int roundNearest();
 void create_board();
 int check_free_spaces();
-bool player_move();
+void player_move();
 char check_1st_place();
 char check_2nd_place();
 char check_3rd_place();
@@ -35,6 +36,8 @@ void print_1st_place(char);
 void print_2nd_place(char);
 void print_3rd_place(char);
 void print_board();
+void printArray(int array[], int size);
+void sort(int array[], int size);
 
 int main()
 {
@@ -69,7 +72,7 @@ int main()
     {
         printf("Enter number of players: ");
         scanf("%d", &numberOfPlayers);
-        if (numberOfPlayers <= 0)
+        if (numberOfPlayers <= 1 || numberOfPlayers > 10)
         {
             printf("Invalid number of players\n");
             continue;
@@ -78,7 +81,7 @@ int main()
         printf("Enter number of penguins per player: ");
         scanf("%d", &numberOfPenguins);
         printf("%d\n", numberOfPenguins);
-        if (numberOfPlayers < 0)
+        if (numberOfPenguins <= 0)
         {
             printf("Invalid number of penguins\n");
             continue;
@@ -117,8 +120,8 @@ int main()
                 {
                     players[p + 1].positionR = moveR;
                     players[p + 1].positionC = moveC;
-                    players[p + 1].score = 1;
-                    numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
+                    players[p + 1].score += 1;
+                    numbers[players[p + 1].positionR][players[p + 1].positionC] = players[p + 1].name[0];
                     print_board();
                     break;
                 }
@@ -130,38 +133,31 @@ int main()
         };
     };
     // Moving phase
-    while (true)
+    while (g == 0)
     {
         for (p = 0; p < numberOfPlayers; p++)
         {
-            for (p = 0; p < numberOfPlayers; p++)
-            {
-                if (check_free_spaces() == 1)
-                {
-                    continue;
-                }
-                else
-                {
-                    players[p + 1].canMove = false;
-                }
-                if (players[p + 1].canMove == false)
-                {
-                    stuck_players++;
-                }
-            }
             if (stuck_players == numberOfPlayers)
             {
-                return false;
+                g = 1;
             }
             else
             {
-                stuck_players = 0;
+                if (check_free_spaces() == 1)
+                {
+                    stuck_players = 0;
+                }
+                else
+                {
+                    stuck_players++;
+                    continue;
+                }
             }
-            printf("%s's turn:\n", players[p + 1].name);
             for (int penguinsMoved = 0; penguinsMoved < numberOfPenguins; penguinsMoved++)
             {
                 if (check_free_spaces() == 1)
                 {
+                    printf("%s's turn:\n", players[p + 1].name);
                     players[p + 1].canMove = true;
                     player_move();
                     print_board();
@@ -169,17 +165,6 @@ int main()
                 else
                 {
                     players[p + 1].canMove = false;
-
-                    stuck_players++;
-
-                    if (stuck_players == numberOfPlayers)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        break;
-                    }
                 }
             }
         }
@@ -194,7 +179,7 @@ int main()
     {
         if (scoreboard[scores] > 0)
         {
-            printf("%d,", scoreboard[scores]);
+            printf("%d ", scoreboard[scores]);
         }
         else
         {
@@ -202,6 +187,10 @@ int main()
         }
     }
     printf("]\n");
+    int size = sizeof(scoreboard) / sizeof(scoreboard[0]);
+    sort(scoreboard, size);
+    printArray(scoreboard, size);
+    for(int i = 0; i < numberOfPlayers; i++)
     return 0;
 }
 
@@ -214,9 +203,16 @@ void create_board()
         {
             fish = rand() % 4;
             numbers[i][j] = fish;
-
-            printf(" %d", numbers[i][j]);
-            printf(" |");
+            if (numbers[i][j] > 3)
+            {
+                printf(" %c", numbers[i][j]);
+                printf(" |");
+            }
+            else
+            {
+                printf(" %d", numbers[i][j]);
+                printf(" |");
+            }
         }
         printf("\n--");
         for (int dashes = 1; dashes <= columns; dashes++)
@@ -233,9 +229,9 @@ void print_board()
         printf("  |");
         for (int j = 0; j < columns; j++)
         {
-            if (i == players[p + 1].positionR && j == players[p + 1].positionC)
+            if (numbers[i][j] > 3)
             {
-                printf(" %c", players[p + 1].name[0]);
+                printf(" %c", numbers[i][j]);
                 printf(" |");
             }
             else
@@ -254,87 +250,96 @@ void print_board()
 }
 int check_free_spaces()
 {
-    if (numbers[players[p + 1].positionR + 1][players[p + 1].positionC] > 0 || numbers[players[p + 1].positionR][players[p + 1].positionC + 1] > 0 || numbers[players[p + 1].positionR - 1][players[p + 1].positionC] > 0 || numbers[players[p + 1].positionR][players[p + 1].positionC - 1] > 0)
-    {
-        return 1;
-    }
-    else
+    if (numbers[players[p + 1].positionR + 1][players[p + 1].positionC] == 0 && numbers[players[p + 1].positionR][players[p + 1].positionC + 1] == 0 && numbers[players[p + 1].positionR - 1][players[p + 1].positionC] == 0 && numbers[players[p + 1].positionR][players[p + 1].positionC - 1] == 0)
     {
         return 0;
     }
+    else
+    {
+        return 1;
+    }
 }
-bool player_move()
+void player_move()
 {
     printf("Where do you want to move? (1=left, 2=up, 3=right, 4= down)\n");
     scanf("%d", &move);
     while (true)
     {
-        switch (move)
+        if (move == 1)
         {
-        case 1:
             if (numbers[players[p + 1].positionR][players[p + 1].positionC - 1] == 0)
             {
                 printf("Invalid movement\n");
-                continue;
+                break;
             }
             else
             {
                 printf("You moved left!\n");
+                numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
                 players[p + 1].score += numbers[players[p + 1].positionR][players[p + 1].positionC - 1];
-                numbers[players[p + 1].positionR][players[p + 1].positionC - 1] = 0;
                 players[p + 1].positionC -= 1;
-                return false;
+                numbers[players[p + 1].positionR][players[p + 1].positionC] = players[p + 1].name[0];
+                break;
+                ;
             }
-
-        case 2:
+        }
+        else if (move == 2)
+        {
             if (numbers[players[p + 1].positionR - 1][players[p + 1].positionC] == 0)
             {
                 printf("Invalid movement\n");
-                continue;
+                break;
             }
             else
             {
                 printf("You moved up!\n");
+                numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
                 players[p + 1].score += numbers[players[p + 1].positionR - 1][players[p + 1].positionC];
-                numbers[players[p + 1].positionR - 1][players[p + 1].positionC] = 0;
                 players[p + 1].positionR -= 1;
-                return false;
+                numbers[players[p + 1].positionR][players[p + 1].positionC] = players[p + 1].name[0];
+                break;
             }
-
-        case 3:
+        }
+        else if (move == 3)
+        {
             if (numbers[players[p + 1].positionR][players[p + 1].positionC + 1] == 0)
             {
                 printf("Invalid movement\n");
-                continue;
+                break;
             }
             else
             {
                 printf("You moved right!\n");
+                numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
                 players[p + 1].score += numbers[players[p + 1].positionR][players[p + 1].positionC + 1];
-                numbers[players[p + 1].positionR][players[p + 1].positionC + 1] = 0;
                 players[p + 1].positionC += 1;
-                return false;
+                numbers[players[p + 1].positionR][players[p + 1].positionC] = players[p + 1].name[0];
+                break;
             }
-
-        case 4:
+        }
+        else if (move == 4)
+        {
             if (numbers[players[p + 1].positionR + 1][players[p + 1].positionC] == 0)
             {
                 printf("Invalid movement\n");
-                continue;
+                break;
             }
             else
             {
                 printf("You moved down\n");
+                numbers[players[p + 1].positionR][players[p + 1].positionC] = 0;
                 players[p + 1].score += numbers[players[p + 1].positionR + 1][players[p + 1].positionC];
-                numbers[players[p + 1].positionR + 1][players[p + 1].positionC] = 0;
                 players[p + 1].positionR += 1;
+                numbers[players[p + 1].positionR][players[p + 1].positionC] = players[p + 1].name[0];
 
-                return false;
+                break;
             }
+        }
 
-        default:
+        else
+        {
             printf("Invalid value!\n");
-            continue;
+            break;
         }
     }
 }
@@ -365,5 +370,27 @@ int roundNearest(double x)
     else
     {
         return floor(x);
+    }
+}
+void sort(int array[], int size)
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = 0; j < size - i - 1; j++)
+        {
+            if (array[j] < array[j + 1])
+            {
+                int temp = array[j];
+                array[j] = array[j + 1];
+                array[j + 1] = temp;
+            }
+        }
+    }
+}
+void printArray(int array[], int size)
+{
+    for (int i = 0; i < size; i++)
+    {
+        printf("%d ", array[i]);
     }
 }
